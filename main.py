@@ -2,7 +2,8 @@ import os
 import scipy.misc
 import numpy as np
 import tensorflow as tf
-from model import DCGAN
+from model import DCGAN_celeba
+from model_mnist import DCGAN_mnist
 from utils import pp, show_all_variables
 
 
@@ -24,41 +25,61 @@ flags.DEFINE_string("checkpoint_dir", "checkpoint", "Directory name to save the 
 flags.DEFINE_string("sample_dir", "samples", "Directory name to save the image samples [samples]")
 flags.DEFINE_boolean("train", False, "True for training, False for testing [False]")
 flags.DEFINE_boolean("crop", False, "True for training, False for testing [False]")
-flags.DEFINE_boolean("visualize", False, "True for visualizing, False for nothing [False]")
 FLAGS = flags.FLAGS
 
 
 def main(_):
-    pp.pprint(flags.FLAGS.__flags)
-
-    if FLAGS.input_width is None:
-        FLAGS.input_width = FLAGS.input_height
-    if FLAGS.output_width is None:
-        FLAGS.output_width = FLAGS.output_height
-
     if not os.path.exists(FLAGS.checkpoint_dir):
         os.makedirs(FLAGS.checkpoint_dir)
     if not os.path.exists(FLAGS.sample_dir):
         os.makedirs(FLAGS.sample_dir)
+
+    if FLAGS.dataset == "mnist":
+        FLAGS.input_height = 28
+        FLAGS.input_width = 28
+        FLAGS.output_height = 28
+        FLAGS.output_width = 28
+    else:
+        if FLAGS.input_width is None:
+            FLAGS.input_width = FLAGS.input_height
+        if FLAGS.output_width is None:
+            FLAGS.output_width = FLAGS.output_height
+
+    pp.pprint(flags.FLAGS.__flags)
 
     # gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.333)
     run_config = tf.ConfigProto()
     run_config.gpu_options.allow_growth = True
 
     with tf.Session(config=run_config) as sess:
-        dcgan = DCGAN(
-            sess,
-            input_width=FLAGS.input_width,
-            input_height=FLAGS.input_height,
-            output_width=FLAGS.output_width,
-            output_height=FLAGS.output_height,
-            batch_size=FLAGS.batch_size,
-            sample_num=FLAGS.batch_size,
-            dataset_name=FLAGS.dataset,
-            input_fname_pattern=FLAGS.input_fname_pattern,
-            crop=FLAGS.crop,
-            checkpoint_dir=FLAGS.checkpoint_dir,
-            sample_dir=FLAGS.sample_dir)
+        if FLAGS.dataset == "mnist":
+            dcgan = DCGAN_mnist(
+                sess,
+                input_width=FLAGS.input_width,
+                input_height=FLAGS.input_height,
+                output_width=FLAGS.output_width,
+                output_height=FLAGS.output_height,
+                batch_size=FLAGS.batch_size,
+                sample_num=FLAGS.batch_size,
+                dataset_name=FLAGS.dataset,
+                input_fname_pattern=FLAGS.input_fname_pattern,
+                crop=FLAGS.crop,
+                checkpoint_dir=FLAGS.checkpoint_dir,
+                sample_dir=FLAGS.sample_dir)
+        else:
+            dcgan = DCGAN(
+                sess,
+                input_width=FLAGS.input_width,
+                input_height=FLAGS.input_height,
+                output_width=FLAGS.output_width,
+                output_height=FLAGS.output_height,
+                batch_size=FLAGS.batch_size,
+                sample_num=FLAGS.batch_size,
+                dataset_name=FLAGS.dataset,
+                input_fname_pattern=FLAGS.input_fname_pattern,
+                crop=FLAGS.crop,
+                checkpoint_dir=FLAGS.checkpoint_dir,
+                sample_dir=FLAGS.sample_dir)
 
         show_all_variables()
 

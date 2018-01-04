@@ -1,0 +1,10 @@
+data/mnist/
+data/svhn/
+data/cifar10/
+data/celebA/
+.ipynb_checkpoints/
+*.py[cod]
+*.sw[op]
+*.txt
+*.gz
+

@@ -2,14 +2,13 @@ import os, time
 import numpy as np
 import tensorflow as tf
 from glob import glob
-from utils2 import *
+from utils import *
 
 
-#params need to be changed
 class DCGAN_mnist(object):
-    def __init__(self, sess, input_height=108, input_width=108, crop=True,
-                 batch_size=64, sample_num=64, output_height=64, output_width=64,
-                 y_dim=None, z_dim=100, gf_dim=64, df_dim=64, gfc_dim=1024, dfc_dim=1024, c_dim=3, 
+    def __init__(self, sess, input_height=28, input_width=28, crop=False,
+                 batch_size=64, sample_num=64, output_height=28, output_width=28,
+                 y_dim=10, z_dim=100, gf_dim=64, df_dim=64, gfc_dim=1024, dfc_dim=1024, c_dim=3, 
                  dataset_name='mnist', input_fname_pattern='*.jpg', 
                  checkpoint_dir=None, sample_dir=None):
         """
@@ -197,10 +196,10 @@ class DCGAN_mnist(object):
 
             h1 = lrelu(self.d_bn1(conv2d(h0, self.df_dim + self.y_dim, name='d_h1_conv')))
             h1 = tf.reshape(h1, [self.batch_size, -1])
-            h1 = concat([h1, y], 1)
+            h1 = tf.concat([h1, y], 1)
 
             h2 = lrelu(self.d_bn2(linear(h1, self.dfc_dim, 'd_h2_lin')))
-            h2 = concat([h2, y], 1)
+            h2 = tf.concat([h2, y], 1)
 
             h3 = linear(h2, 1, 'd_h3_lin')
 
@@ -214,10 +213,10 @@ class DCGAN_mnist(object):
 
             # yb = tf.expand_dims(tf.expand_dims(y, 1),2)
             yb = tf.reshape(y, [self.batch_size, 1, 1, self.y_dim])
-            z = concat([z, y], 1)
+            z = tf.concat([z, y], 1)
 
             h0 = tf.nn.relu(self.g_bn0(linear(z, self.gfc_dim, 'g_h0_lin')))
-            h0 = concat([h0, y], 1)
+            h0 = tf.concat([h0, y], 1)
 
             h1 = tf.nn.relu(self.g_bn1(linear(h0, self.gf_dim * 2 * s_h4 * s_w4, 'g_h1_lin')))
             h1 = tf.reshape(h1, [self.batch_size, s_h4, s_w4, self.gf_dim * 2])
@@ -238,10 +237,10 @@ class DCGAN_mnist(object):
 
             # yb = tf.reshape(y, [-1, 1, 1, self.y_dim])
             yb = tf.reshape(y, [self.batch_size, 1, 1, self.y_dim])
-            z = concat([z, y], 1)
+            z = tf.concat([z, y], 1)
 
             h0 = tf.nn.relu(self.g_bn0(linear(z, self.gfc_dim, 'g_h0_lin'), train=False))
-            h0 = concat([h0, y], 1)
+            h0 = tf.concat([h0, y], 1)
 
             h1 = tf.nn.relu(self.g_bn1(linear(h0, self.gf_dim * 2 * s_h4 * s_w4, 'g_h1_lin'), train=False))
             h1 = tf.reshape(h1, [self.batch_size, s_h4, s_w4, self.gf_dim * 2])
@@ -339,6 +338,13 @@ class batch_norm(object):
     
 def conv_out_size_same(size, stride):
     return int(np.ceil(float(size)/float(stride)))
+
+
+def conv_cond_concat(x, y):
+    """Concatenate conditioning vector on feature map axis."""
+    x_shapes = x.get_shape()
+    y_shapes = y.get_shape()
+    return tf.concat([x, y*tf.ones([x_shapes[0], x_shapes[1], x_shapes[2], y_shapes[3]])], 3)
 
 
 def conv2d(input_, output_dim, k_h=5, k_w=5, d_h=2, d_w=2, stddev=0.02, name="conv2d"):
