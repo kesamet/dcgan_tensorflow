@@ -2,7 +2,7 @@ import os
 import scipy.misc
 import numpy as np
 import tensorflow as tf
-from model import DCGAN_celeba
+from model import DCGAN
 from model_mnist import DCGAN_mnist
 from utils import pp, show_all_variables
 
